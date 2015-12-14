@@ -2981,7 +2981,7 @@ def InstanceShutdown(instance, timeout, reason, store_reason=True):
       _Fail("Could not shutdown instance '%s' even by destroy", instance.name)
 
   try:
-    hyper.CleanupInstance(instance.name)
+    hyper.CleanupInstance(instance)
   except errors.HypervisorError, err:
     logging.warning("Failed to execute post-shutdown cleanup step: %s", err)
 

@@ -818,41 +818,41 @@ class KVMHypervisor(hv_base.BaseHypervisor):
     return None
 
   @classmethod
-  def _RemoveInstanceRuntimeFiles(cls, pidfile, instance_name):
+  def _RemoveInstanceRuntimeFiles(cls, pidfile, instance):
     """Removes an instance's rutime sockets/files/dirs.
 
     """
     utils.RemoveFile(pidfile)
-    utils.RemoveFile(cls._InstanceMonitor(instance_name))
-    utils.RemoveFile(cls._InstanceSerial(instance_name))
-    utils.RemoveFile(cls._InstanceQmpMonitor(instance_name))
-    utils.RemoveFile(cls._InstanceKVMRuntime(instance_name))
-    utils.RemoveFile(cls._InstanceKeymapFile(instance_name))
-    uid_file = cls._InstanceUidFile(instance_name)
+    utils.RemoveFile(cls._InstanceMonitor(instance.name))
+    utils.RemoveFile(cls._InstanceSerial(instance.name))
+    utils.RemoveFile(cls._InstanceQmpMonitor(instance.name))
+    utils.RemoveFile(cls._InstanceKVMRuntime(instance.name))
+    utils.RemoveFile(cls._InstanceKeymapFile(instance.name))
+    uid_file = cls._InstanceUidFile(instance.name)
     uid = cls._TryReadUidFile(uid_file)
     utils.RemoveFile(uid_file)
     if uid is not None:
       uidpool.ReleaseUid(uid)
     try:
-      shutil.rmtree(cls._InstanceNICDir(instance_name))
+      shutil.rmtree(cls._InstanceNICDir(instance.name))
     except OSError, err:
       if err.errno != errno.ENOENT:
         raise
     try:
-      chroot_dir = cls._InstanceChrootDir(instance_name)
+      chroot_dir = cls._InstanceChrootDir(instance.name)
       utils.RemoveDir(chroot_dir)
     except OSError, err:
       if err.errno == errno.ENOTEMPTY:
         # The chroot directory is expected to be empty, but it isn't.
         new_chroot_dir = tempfile.mkdtemp(dir=cls._CHROOT_QUARANTINE_DIR,
                                           prefix="%s-%s-" %
-                                          (instance_name,
+                                          (instance.name,
                                            utils.TimestampForFilename()))
         logging.warning("The chroot directory of instance %s can not be"
                         " removed as it is not empty. Moving it to the"
                         " quarantine instead. Please investigate the"
                         " contents (%s) and clean up manually",
-                        instance_name, new_chroot_dir)
+                        instance.name, new_chroot_dir)
         utils.RenameFile(chroot_dir, new_chroot_dir)
       else:
         raise
@@ -2370,15 +2370,15 @@ class KVMHypervisor(hv_base.BaseHypervisor):
     """
     self._StopInstance(instance, force, name=name, timeout=timeout)
 
-  def CleanupInstance(self, instance_name):
+  def CleanupInstance(self, instance):
     """Cleanup after a stopped instance
 
     """
-    pidfile, pid, alive = self._InstancePidAlive(instance_name)
+    pidfile, pid, alive = self._InstancePidAlive(instance.name)
     if pid > 0 and alive:
       raise errors.HypervisorError("Cannot cleanup a live instance")
-    self._RemoveInstanceRuntimeFiles(pidfile, instance_name)
-    self._ClearUserShutdown(instance_name)
+    self._RemoveInstanceRuntimeFiles(pidfile, instance)
+    self._ClearUserShutdown(instance.name)
 
   def RebootInstance(self, instance):
     """Reboot an instance.
@@ -2520,7 +2520,7 @@ class KVMHypervisor(hv_base.BaseHypervisor):
     if success:
       pidfile, pid, _ = self._InstancePidAlive(instance.name)
       utils.KillProcess(pid)
-      self._RemoveInstanceRuntimeFiles(pidfile, instance.name)
+      self._RemoveInstanceRuntimeFiles(pidfile, instance)
     elif live:
       self._CallMonitorCommand(instance.name, self._CONT_CMD)
     self._ClearUserShutdown(instance.name)

@@ -223,11 +223,11 @@ class ChrootManager(hv_base.BaseHypervisor):
         raise HypervisorError("Can't stop the processes using the chroot")
       return
 
-  def CleanupInstance(self, instance_name):
+  def CleanupInstance(self, instance):
     """Cleanup after a stopped instance
 
     """
-    root_dir = self._InstanceDir(instance_name)
+    root_dir = self._InstanceDir(instance.name)
 
     if not os.path.exists(root_dir):
       return

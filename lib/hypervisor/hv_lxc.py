@@ -267,11 +267,11 @@ class LXCHypervisor(hv_base.BaseHypervisor):
 
     return subsys_dir
 
-  def _CleanupInstance(self, instance_name, stash):
+  def _CleanupInstance(self, instance, stash):
     """Actual implementation of the instance cleanup procedure.
 
-    @type instance_name: string
-    @param instance_name: instance name
+    @type instance: instance object
+    @param instance: the instance we've working on
     @type stash: dict(string:any)
     @param stash: dict that contains desired information for instance cleanup
 
@@ -283,14 +283,14 @@ class LXCHypervisor(hv_base.BaseHypervisor):
     except errors.CommandError, err:
       raise HypervisorError("Failed to cleanup partition mapping : %s" % err)
 
-    utils.RemoveFile(self._InstanceStashFilePath(instance_name))
+    utils.RemoveFile(self._InstanceStashFilePath(instance.name))
 
-  def CleanupInstance(self, instance_name):
+  def CleanupInstance(self, instance):
     """Cleanup after a stopped instance.
 
     """
-    stash = self._LoadInstanceStash(instance_name)
-    self._CleanupInstance(instance_name, stash)
+    stash = self._LoadInstanceStash(instance.name)
+    self._CleanupInstance(instance, stash)
 
   @classmethod
   def _GetCgroupMountPoint(cls):
@@ -800,7 +800,7 @@ class LXCHypervisor(hv_base.BaseHypervisor):
       # Save the original error
       exc_info = sys.exc_info()
       try:
-        self._CleanupInstance(instance.name, stash)
+        self._CleanupInstance(instance, stash)
       except HypervisorError, err:
         logging.warn("Cleanup for instance %s incomplete: %s",
                      instance.name, err)
