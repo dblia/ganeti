@@ -317,6 +317,24 @@ class TestLUInstanceCreate(CmdlibTestCase):
                          }])
     self.ExecOpCode(op)
 
+  def testValidNicParamsMacvtap(self):
+    op = self.CopyOpCode(self.diskless_op,
+                         nics=[{
+                           constants.INIC_MODE: constants.NIC_MODE_MACVTAP,
+                           constants.INIC_MACVTAP_MODE:
+                             constants.NIC_MACVTAP_MODE_VEPA,
+                         }])
+    self.ExecOpCode(op)
+
+  def testInvalidNicParamsMacvtap(self):
+    op = self.CopyOpCode(self.diskless_op,
+                         nics=[{
+                           constants.INIC_MODE: constants.NIC_MODE_MACVTAP,
+                           constants.INIC_MACVTAP_MODE: "invalid"
+                         }])
+    self.ExecOpCodeExpectOpPrereqError(
+      op, "Invalid macvtap_mode given")
+
   def testNicNoneName(self):
     op = self.CopyOpCode(self.diskless_op,
                          nics=[{
@@ -2142,6 +2160,10 @@ class TestLUInstanceSetParams(CmdlibTestCase):
       self.RpcResultsBuilder() \
         .CreateSuccessfulNodeResult(self.master, True)
 
+    self.rpc.call_netdevs_exist.return_value = \
+      self.RpcResultsBuilder() \
+        .CreateSuccessfulNodeResult(self.master, True)
+
     self.rpc.call_blockdev_getmirrorstatus.side_effect = \
       lambda node, _: self.RpcResultsBuilder() \
                         .CreateSuccessfulNodeResult(node, [])
@@ -2330,6 +2352,28 @@ class TestLUInstanceSetParams(CmdlibTestCase):
                          nics=[(constants.DDM_ADD, -1, {})])
     self.ExecOpCode(op)
 
+  def testAddNicWithValidMacvtapMode(self):
+    op = self.CopyOpCode(self.op,
+                         nics=[(constants.DDM_ADD, -1,
+                                {
+                                  constants.INIC_MODE:
+                                    constants.NIC_MODE_MACVTAP,
+                                  constants.INIC_MACVTAP_MODE:
+                                    constants.NIC_MACVTAP_MODE_VEPA
+                                })])
+    self.ExecOpCode(op)
+
+  def testAddNicWithInvalidMacvtapMode(self):
+    op = self.CopyOpCode(self.op,
+                         nics=[(constants.DDM_ADD, -1,
+                                {
+                                  constants.INIC_MODE:
+                                    constants.NIC_MODE_MACVTAP,
+                                  constants.INIC_MACVTAP_MODE: "invalid"
+                                })])
+    self.ExecOpCodeExpectOpPrereqError(
+      op, "Invalid macvtap_mode given")
+
   def testAttachNICs(self):
     msg = "Attach operation is not supported for NICs"
     op = self.CopyOpCode(self.op,
@@ -2452,6 +2496,28 @@ class TestLUInstanceSetParams(CmdlibTestCase):
     op = self.CopyOpCode(self.op,
                          nics=[(constants.DDM_MODIFY, 0, {})])
     self.ExecOpCode(op)
+
+  def testModifyNicWithValidMacVTapMode(self):
+    op = self.CopyOpCode(self.op,
+                         nics=[(constants.DDM_MODIFY, 0,
+                                {
+                                  constants.INIC_MODE:
+                                    constants.NIC_MODE_MACVTAP,
+                                  constants.INIC_MACVTAP_MODE:
+                                    constants.NIC_MACVTAP_MODE_VEPA
+                                })])
+    self.ExecOpCode(op)
+
+  def testModifyNicWithInvalidMacVTapMode(self):
+    op = self.CopyOpCode(self.op,
+                         nics=[(constants.DDM_MODIFY, 0,
+                                {
+                                  constants.INIC_MODE:
+                                    constants.NIC_MODE_MACVTAP,
+                                  constants.INIC_MACVTAP_MODE: "invalid"
+                                })])
+    self.ExecOpCodeExpectOpPrereqError(
+      op, "Invalid macvtap_mode given")
 
   def testHotModifyNic(self):
     op = self.CopyOpCode(self.op,
