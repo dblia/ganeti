@@ -37,7 +37,9 @@ import logging
 import struct
 import fcntl
 
+from ganeti import utils
 from ganeti import errors
+from ganeti import constants
 
 
 # TUN/TAP driver constants, taken from <linux/if_tun.h>
@@ -124,6 +126,21 @@ def _ProbeTapMqVirtioNet(fd, _features_fn=_GetTunFeatures):
   return result
 
 
+def _GetVhostFd():
+  """Return a /dev/vhost-net file descriptor.
+
+  This is done regularly by the qemu process if vhost=on was passed with
+  --netdev option. Still, in case of hotplug and if the process does not
+  run with root privileges, we have to get the fds and pass them via
+  SCM_RIGHTS prior to qemu using them.
+
+  """
+  try:
+    return os.open("/dev/vhost-net", os.O_RDWR)
+  except EnvironmentError:
+    raise errors.HypervisorError("Failed to open /dev/vhost-net")
+
+
 def OpenTap(name="", features=None):
   """Open a new tap device and return its file descriptor.
 
@@ -177,15 +194,7 @@ def OpenTap(name="", features=None):
                                    err)
 
     if vhost:
-      # This is done regularly by the qemu process if vhost=on was passed with
-      # --netdev option. Still, in case of hotplug and if the process does not
-      # run with root privileges, we have to get the fds and pass them via
-      # SCM_RIGHTS prior to qemu using them.
-      try:
-        vhostfd = os.open("/dev/vhost-net", os.O_RDWR)
-        vhostfds.append(vhostfd)
-      except EnvironmentError:
-        raise errors.HypervisorError("Failed to open /dev/vhost-net")
+      vhostfds.append(_GetVhostFd())
 
     tapfds.append(tapfd)
 
@@ -193,3 +202,75 @@ def OpenTap(name="", features=None):
   ifname = struct.unpack("16sh", res)[0].strip("\x00")
 
   return (ifname, tapfds, vhostfds)
+
+
+def OpenMacVTap(name, link, mac, macvtap_mode, features=None):
+  """Open a new macvtap device and return its file descriptor.
+
+  This is intended to be used by a qemu-type hypervisor together with the
+  -netdev type=tap,fd=<fd>,id=<id> -device virtio-net-pci,netdev=<id>,mac=<mac>
+  command line parameter.
+
+  @type name: string
+  @param name: name for the macvtap interface to be created; name created
+      using the L{hv_base.GenerateTapName} helper method
+  @type link: string
+  @param link: specifies the physical device to operate on
+  @type mac: string
+  @param mac: specifies the MAC address of the macvtap interface
+  @type macvtap_mode: string
+  @param macvtap_mode: specifies the type of the new device; vepa, bridge,
+    private, or passthru
+  @type features: dict
+  @param features: A dict denoting whether vhost or mq netdev features
+    are enabled or not
+
+  @rtype: tuple
+  @return: (ifname, [tapfd], [vhostfd])
+
+  """
+  ifname = name
+  tapfd = []
+  vhostfd = []
+
+  if features is None:
+    features = {}
+  vhost = features.get("vhost", False)
+  _, virtio_net_queues = features.get("mq", (False, 1))
+
+  if not ifname:
+    raise errors.HypervisorError("Cannot create macvtap device: device name"
+                                 " is empty")
+
+  # Construct the ip-link command for the macvtap interface
+  cmd = ["ip", "link", "add"]
+  cmd.extend(["link", link])
+  cmd.extend(["name", name])
+  cmd.extend(["address", mac])
+  if virtio_net_queues > 1:
+    cmd.extend(["numtxqueues", virtio_net_queues])
+    cmd.extend(["numrxqueues", virtio_net_queues])
+  cmd.extend(["type", constants.NIC_MODE_MACVTAP])
+  cmd.extend(["mode", macvtap_mode])
+
+  result = utils.RunCmd(cmd)
+  if result.failed:
+    raise errors.HypervisorError("Failed to create macvtap device: %s (%s)" %
+                                 (ifname, result.fail_reason))
+
+  try:
+    with open(utils.PathJoin("/sys/class/net", name, "ifindex"), "r") as fd:
+      ifindex = fd.read().strip()
+  except IOError, err:
+    raise errors.HypervisorError("Failed to read from sysfs %s: %s" %
+                                 (name, err))
+
+  try:
+    tapfd.append(os.open("/dev/tap%s" % ifindex, os.O_RDWR))
+  except EnvironmentError:
+    raise errors.HypervisorError("Failed to open /dev/tap%s" % ifindex)
+
+  if vhost:
+    vhostfd = [_GetVhostFd()]
+
+  return (ifname, tapfd, vhostfd)
