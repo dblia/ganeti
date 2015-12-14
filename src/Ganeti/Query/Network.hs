@@ -141,12 +141,12 @@ getNicMode :: PartialNicParams -> String
 getNicMode nic_params =
   maybe "-" nICModeToRaw $ nicpModeP nic_params
 
--- | Retrieves the network's vlan and formats it human-readable, also in
+-- | Retrieves the network's link and formats it human-readable, also in
 -- case it it not available.
 getNicLink :: PartialNicParams -> String
 getNicLink nic_params = fromMaybe "-" (nicpLinkP nic_params)
 
--- | Retrieves the network's link and formats it human-readable, also in
+-- | Retrieves the network's vlan and formats it human-readable, also in
 -- case it it not available.
 getNicVlan :: PartialNicParams -> String
 getNicVlan nic_params = fromMaybe "-" (nicpVlanP nic_params)
