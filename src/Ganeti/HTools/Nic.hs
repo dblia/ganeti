@@ -48,7 +48,7 @@ import qualified Ganeti.HTools.Types as T
 
 -- * Type declarations
 
-data Mode = Bridged | Routed | OpenVSwitch deriving (Show, Eq)
+data Mode = Bridged | Routed | OpenVSwitch | MacVtap deriving (Show, Eq)
 
 -- | The NIC type.
 --

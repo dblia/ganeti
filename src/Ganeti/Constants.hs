@@ -2541,6 +2541,9 @@ nicModeRouted = Types.nICModeToRaw NMRouted
 nicModeOvs :: String
 nicModeOvs = Types.nICModeToRaw NMOvs
 
+nicModeMacvtap:: String
+nicModeMacvtap = Types.nICModeToRaw NMMacvtap
+
 nicIpPool :: String
 nicIpPool = Types.nICModeToRaw NMPool
 
