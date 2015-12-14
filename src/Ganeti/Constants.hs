@@ -2523,11 +2523,15 @@ nicMode = "mode"
 nicVlan :: String
 nicVlan = "vlan"
 
+nicMacvtapMode :: String
+nicMacvtapMode = "macvtap_mode"
+
 nicsParameterTypes :: Map String VType
 nicsParameterTypes =
   Map.fromList [(nicMode, vtypeString),
                 (nicLink, vtypeString),
-                (nicVlan, vtypeString)]
+                (nicVlan, vtypeString),
+                (nicMacvtapMode, vtypeString)]
 
 nicsParameters :: FrozenSet String
 nicsParameters = ConstantUtils.mkSet (Map.keys nicsParameterTypes)
@@ -2549,6 +2553,26 @@ nicIpPool = Types.nICModeToRaw NMPool
 
 nicValidModes :: FrozenSet String
 nicValidModes = ConstantUtils.mkSet $ map Types.nICModeToRaw [minBound..]
+
+nicMacvtapModeVepa :: String
+nicMacvtapModeVepa = "vepa"
+
+nicMacvtapModeBridge :: String
+nicMacvtapModeBridge = "bridge"
+
+nicMacvtapModePrivate :: String
+nicMacvtapModePrivate = "private"
+
+nicMacvtapModePassthru :: String
+nicMacvtapModePassthru = "passthru"
+
+nicMacvtapModes :: FrozenSet String
+nicMacvtapModes =
+  ConstantUtils.mkSet [ nicMacvtapModeVepa
+                      , nicMacvtapModeBridge
+                      , nicMacvtapModePrivate
+                      , nicMacvtapModePassthru
+                      ]
 
 releaseAction :: String
 releaseAction = "release"
@@ -2640,6 +2664,9 @@ inicNetwork = "network"
 inicVlan :: String
 inicVlan = "vlan"
 
+inicMacvtapMode :: String
+inicMacvtapMode = "macvtap_mode"
+
 inicParamsTypes :: Map String VType
 inicParamsTypes =
   Map.fromList [(inicBridge, VTypeMaybeString),
@@ -2649,7 +2676,8 @@ inicParamsTypes =
                 (inicMode, VTypeString),
                 (inicName, VTypeMaybeString),
                 (inicNetwork, VTypeMaybeString),
-                (inicVlan, VTypeMaybeString)]
+                (inicVlan, VTypeMaybeString),
+                (inicMacvtapMode, VTypeMaybeString)]
 
 inicParams :: FrozenSet String
 inicParams = ConstantUtils.mkSet (Map.keys inicParamsTypes)
@@ -4316,6 +4344,7 @@ niccDefaults =
   [ (nicMode, PyValueEx nicModeBridged)
   , (nicLink, PyValueEx defaultBridge)
   , (nicVlan, PyValueEx "")
+  , (nicMacvtapMode, PyValueEx "")
   ]
 
 -- | All of the following values are quite arbitrary - there are no
