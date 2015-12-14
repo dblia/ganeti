@@ -874,6 +874,32 @@ def ComputeInstanceCommunicationNIC(instance_name):
   return constants.INSTANCE_COMMUNICATION_NIC_PREFIX + instance_name
 
 
+def ComputeMacvtapModeNicParam(macvtap_mode):
+  """Validate and compute the macvtap_mode nicparam of a macvtap NIC.
+
+  A MacVTap NIC can operate in one of four modes, i.e., vepa, bridge,
+  private, and passthru. This method checks that the value of the
+  macvtap_mode nicparam belongs in one of those modes and if it doesn't
+  raises an OpPrereqError. In case of an empty macvtap_mode param, it
+  will be set to the default mode for Ganeti, the bridge mode.
+
+  @type macvtap_mode: string
+  @param macvtap_mode: specifies the operation mode of a MacVTap NIC
+
+  @rtype: string
+  @return: the validated macvtap_mode nicparam
+  @raise errors.OpPrereqError: if the macvtap_mode passed is not supported
+
+  """
+  if not macvtap_mode:
+    return constants.NIC_MACVTAP_MODE_BRIDGE
+  elif macvtap_mode in constants.NIC_MACVTAP_MODES:
+    return macvtap_mode
+  else:
+    raise errors.OpPrereqError("Invalid macvtap_mode given: %s" % macvtap_mode,
+                               errors.ECODE_INVAL)
+
+
 def PrepareContainerMods(mods, private_fn):
   """Prepares a list of container modifications by adding a private data field.
 
