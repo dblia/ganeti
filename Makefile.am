@@ -335,6 +335,7 @@ CLEANFILES = \
 	lib/_generated_rpc.py \
 	$(man_MANS) \
 	$(manhtml) \
+	tools/kvm-ifdown \
 	tools/kvm-ifup \
 	tools/kvm-ifup-os \
 	tools/xen-ifup-os \
@@ -1597,6 +1598,7 @@ pkglib_python_basenames = \
 
 myexeclib_SCRIPTS = \
 	daemons/daemon-util \
+	tools/kvm-ifdown \
 	tools/kvm-ifup \
 	tools/kvm-ifup-os \
 	tools/xen-ifup-os \
@@ -1641,6 +1643,7 @@ EXTRA_DIST += \
 	devel/cert_digest.py \
 	devel/upload \
 	devel/webserver \
+	tools/kvm-ifdown.in \
 	tools/kvm-ifup.in \
 	tools/ifup-os.in \
 	tools/vif-ganeti.in \
@@ -2209,6 +2212,10 @@ test/py/systemd_unittest.bash: daemons/daemon-util $(BUILT_EXAMPLES)
 test/py/ganeti-cleaner_unittest.bash: daemons/ganeti-cleaner
 
 test/py/bash_completion.bash: doc/examples/bash_completion-debug
+
+tools/kvm-ifdown: tools/kvm-ifdown.in $(REPLACE_VARS_SED)
+	sed -f $(REPLACE_VARS_SED) < $< > $@
+	chmod +x $@
 
 tools/kvm-ifup: tools/kvm-ifup.in $(REPLACE_VARS_SED)
 	sed -f $(REPLACE_VARS_SED) < $< > $@

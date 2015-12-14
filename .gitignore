@@ -125,6 +125,7 @@
 /test/hs/htest
 
 # tools
+/tools/kvm-ifdown
 /tools/kvm-ifup
 /tools/kvm-ifup-os
 /tools/xen-ifup-os
