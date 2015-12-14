@@ -1718,6 +1718,9 @@ class KVMHypervisor(hv_base.BaseHypervisor):
 
     For the case of the empty string, see L{OpenTap}
 
+    If NIC mode is set to macvtap, a new interface name should always be
+    generated, otherwise it won't be able to retrieve the OS generated name.
+
     @type nic: ganeti.objects.NIC
     @param nic: NIC object for the name should be generated
 
@@ -1726,6 +1729,10 @@ class KVMHypervisor(hv_base.BaseHypervisor):
              NIC is not used in instance communication
 
     """
+    mode = nic.nicparams.get(constants.NIC_MODE, None)
+    if mode == constants.NIC_MODE_MACVTAP:
+      return hv_base.GenerateTapName(instance_comm=False)
+
     if nic.name is None or not \
           nic.name.startswith(constants.INSTANCE_COMMUNICATION_NIC_PREFIX):
       return ""
@@ -1865,8 +1872,7 @@ class KVMHypervisor(hv_base.BaseHypervisor):
       nic_model = features["driver"]
       kvm_supports_netdev = self._NETDEV_RE.search(kvmhelp)
       for nic_seq, nic in enumerate(kvm_nics):
-        tapname, nic_tapfds, nic_vhostfds = \
-          OpenTap(features=features, name=self._GenerateKvmTapName(nic))
+        tapname, nic_tapfds, nic_vhostfds = self._OpenTapHelper(nic, features)
 
         tapfds.extend(nic_tapfds)
         tapfds.extend(nic_vhostfds)
@@ -2252,7 +2258,7 @@ class KVMHypervisor(hv_base.BaseHypervisor):
       kvmhelp = self._GetKVMOutput(kvmpath, self._KVMOPT_HELP)
       devlist = self._GetKVMOutput(kvmpath, self._KVMOPT_DEVICELIST)
       features, _, _ = self._GetNetworkDeviceFeatures(up_hvp, devlist, kvmhelp)
-      (tap, tapfds, vhostfds) = OpenTap(features=features)
+      (tap, tapfds, vhostfds) = self._OpenTapHelper(device, features=features)
       self._ConfigureNIC(instance, seq, device, tap)
       self.qmp.HotAddNic(device, kvm_devid, tapfds, vhostfds, features)
       utils.WriteFile(self._InstanceNICFile(instance.name, seq), data=tap)
