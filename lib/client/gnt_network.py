@@ -174,8 +174,9 @@ def ListNetworks(opts, args):
   fmtoverride = {
     "group_list":
       (lambda data:
-        utils.CommaJoin("%s (%s, %s, %s)" % (name, mode, link, vlan)
-                        for (name, mode, link, vlan) in data),
+        utils.CommaJoin("%s (%s, %s, %s, %s)" %
+                        (name, mode, link, vlan, macvtap_mode)
+                        for (name, mode, link, vlan, macvtap_mode) in data),
        False),
     "inst_list": (",".join, False),
     "tags": (",".join, False),
@@ -256,9 +257,9 @@ def ShowNetworkConfig(_, args):
 
     if group_list:
       ToStdout("  connected to node groups:")
-      for group, nic_mode, nic_link, nic_vlan in group_list:
-        ToStdout("    %s (mode:%s link:%s vlan:%s)",
-                 group, nic_mode, nic_link, nic_vlan)
+      for group, nic_mode, nic_link, nic_vlan, nic_macvtap_mode in group_list:
+        ToStdout("    %s (mode:%s link:%s vlan:%s macvtap_mode:%s)",
+                 group, nic_mode, nic_link, nic_vlan, nic_macvtap_mode)
     else:
       ToStdout("  not connected to any node group")
 

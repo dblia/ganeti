@@ -266,6 +266,11 @@ instanceFields =
      FieldConfig (\cfg -> rsNormal . map (MaybeForJSON . getNicVlan .
        fillNicParamsFromConfig cfg . nicNicparams) . instNics),
      QffNormal)
+  , (FieldDefinition "nic.macvtap_modes" "NIC_macvtap_modes" QFTOther
+     (nicAggDescPrefix ++ "macvtap_mode"),
+     FieldConfig (\cfg -> rsNormal . map (MaybeForJSON . getNicMacvtapMode .
+       fillNicParamsFromConfig cfg . nicNicparams) . instNics),
+     QffNormal)
   , (FieldDefinition "nic.bridges" "NIC_bridges" QFTOther
      (nicAggDescPrefix ++ "bridge"),
      FieldConfig (\cfg -> rsNormal . map (MaybeForJSON . getNicBridge .
@@ -314,6 +319,9 @@ instanceFields =
   , (fieldDefinitionCompleter "nic.vlan/%d" "NicVLAN/%d" QFTText
      ("VLAN" ++ nicDescSuffix),
      getOptionalIndexedNicField getNicVlan, QffNormal)
+  , (fieldDefinitionCompleter "nic.macvtap_mode/%d" "NicMacvtapMode/%d" QFTText
+     ("MacVtap Mode" ++ nicDescSuffix),
+     getOptionalIndexedNicField getNicMacvtapMode, QffNormal)
   , (fieldDefinitionCompleter "nic.network.name/%d" "NicNetworkName/%d" QFTText
      ("Network name" ++ nicDescSuffix),
      getIndexedNicNetworkNameField, QffNormal)
@@ -371,6 +379,12 @@ getNicVlan :: FilledNicParams -> Maybe String
 getNicVlan params
   | nicpMode params == NMOvs = Just $ nicpVlan params
   | otherwise                = Nothing
+
+-- | Gets the mode of a macvtap NIC.
+getNicMacvtapMode :: FilledNicParams -> Maybe String
+getNicMacvtapMode param
+  | nicpMode param == NMMacvtap = Just $ nicpMacvtapMode param
+  | otherwise                   = Nothing
 
 -- | Fill partial NIC params by using the defaults from the configuration.
 fillNicParamsFromConfig :: ConfigData -> PartialNicParams -> FilledNicParams

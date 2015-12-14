@@ -112,7 +112,7 @@ fieldsMap = fieldListToFieldMap networkFields
 -- | Given a network's UUID, this function lists all connections from
 -- the network to nodegroups including the respective mode and links.
 getGroupConnections ::
-  ConfigData -> String -> [(String, String, String, String)]
+  ConfigData -> String -> [Tuple5 String String String String String]
 getGroupConnections cfg network_uuid =
   mapMaybe (getGroupConnection network_uuid)
   ((Map.elems . fromContainer . configNodegroups) cfg)
@@ -122,13 +122,18 @@ getGroupConnections cfg network_uuid =
 -- network is connected to the group. Returns 'Nothing' if the network
 -- is not connected to the group.
 getGroupConnection ::
-  String -> NodeGroup -> Maybe (String, String, String, String)
+  String -> NodeGroup -> Maybe (Tuple5 String String String String String)
 getGroupConnection network_uuid group =
   let networks = fromContainer . groupNetworks $ group
   in case Map.lookup (UTF8.fromString network_uuid) networks of
     Nothing -> Nothing
     Just net ->
-      Just (groupName group, getNicMode net, getNicLink net, getNicVlan net)
+      Just (Tuple5 ( groupName group
+                   , getNicMode net
+                   , getNicLink net
+                   , getNicVlan net
+                   , getNicMacvtapMode net
+                   ))
 
 -- | Retrieves the network's mode and formats it human-readable,
 -- also in case it is not available.
@@ -145,6 +150,11 @@ getNicLink nic_params = fromMaybe "-" (nicpLinkP nic_params)
 -- case it it not available.
 getNicVlan :: PartialNicParams -> String
 getNicVlan nic_params = fromMaybe "-" (nicpVlanP nic_params)
+
+-- | Retrieves the network's macvtap mode and formats it human-readable, also in
+-- case it it not available.
+getNicMacvtapMode:: PartialNicParams -> String
+getNicMacvtapMode nic_params = fromMaybe "-" (nicpMacvtapModeP nic_params)
 
 -- | Retrieves the network's instances' names.
 getInstances :: ConfigData -> String -> [String]

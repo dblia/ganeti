@@ -1088,7 +1088,7 @@ def _FormatBlockDevInfo(idx, top_level, dev, roman):
 
 def _FormatInstanceNicInfo(idx, nic, roman=False):
   """Helper function for L{_FormatInstanceInfo()}"""
-  (name, uuid, ip, mac, mode, link, vlan, _, netinfo) = nic
+  (name, uuid, ip, mac, mode, link, vlan, _, netinfo, macvtap_mode) = nic
   network_name = None
   if netinfo:
     network_name = netinfo["name"]
@@ -1099,6 +1099,7 @@ def _FormatInstanceNicInfo(idx, nic, roman=False):
     ("mode", str(mode)),
     ("link", str(link)),
     ("vlan", str(compat.TryToRoman(vlan, roman))),
+    ("macvtap_mode", str(macvtap_mode)),
     ("network", str(network_name)),
     ("UUID", str(uuid)),
     ("name", str(name)),
