@@ -39,6 +39,7 @@ import logging
 import time
 
 from ganeti.cmdlib import cluster
+from ganeti.cmdlib.instance_utils import ComputeMacvtapModeNicParam
 import ganeti.rpc.node as rpc
 from ganeti import ssh
 from ganeti import utils
@@ -627,7 +628,8 @@ def InitCluster(cluster_name, mac_prefix, # pylint: disable=R0913, R0914
     raise errors.OpPrereqError("Invalid mac prefix given '%s'" % mac_prefix,
                                errors.ECODE_INVAL)
 
-  if not nicparams.get('mode', None) == constants.NIC_MODE_OVS:
+  nic_mode = nicparams.get(constants.NIC_MODE, None)
+  if not nic_mode == constants.NIC_MODE_OVS:
     # Do not do this check if mode=openvswitch, since the openvswitch is not
     # created yet
     result = utils.RunCmd(["ip", "link", "show", "dev", master_netdev])
@@ -635,6 +637,12 @@ def InitCluster(cluster_name, mac_prefix, # pylint: disable=R0913, R0914
       raise errors.OpPrereqError("Invalid master netdev given (%s): '%s'" %
                                  (master_netdev,
                                   result.output.strip()), errors.ECODE_INVAL)
+
+  # if mode is set to MacVTap, validate and compute the macvtap_mode nicparam
+  if nic_mode == constants.NIC_MODE_MACVTAP:
+    macvtap_mode = nicparams.get(constants.NIC_MACVTAP_MODE, "")
+    nicparams[constants.NIC_MACVTAP_MODE] = \
+      ComputeMacvtapModeNicParam(macvtap_mode)
 
   dirs = [(pathutils.RUN_DIR, constants.RUN_DIRS_MODE)]
   utils.EnsureDirs(dirs)
