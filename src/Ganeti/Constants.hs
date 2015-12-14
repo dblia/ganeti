@@ -2574,6 +2574,9 @@ nicMacvtapModes =
                       , nicMacvtapModePassthru
                       ]
 
+macvtapDevicePrefix :: String
+macvtapDevicePrefix = "gnt.macvtap."
+
 releaseAction :: String
 releaseAction = "release"
 

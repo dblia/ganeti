@@ -168,19 +168,27 @@ def ParamInSet(required, my_set):
   return (required, fn, err, None, None)
 
 
-def GenerateTapName():
+def GenerateTapName(instance_comm=True):
   """Generate a TAP network interface name for a NIC.
 
   This helper function generates a special TAP network interface
-  name for NICs that are meant to be used in instance communication.
-  This function checks the existing TAP interfaces in order to find
-  a unique name for the new TAP network interface.  The TAP network
-  interface names are of the form 'gnt.com.%d', where '%d' is a
-  unique number within the node.
+  name for NICs that are meant to be used in instance communication
+  or for NICs using the MacVTap device driver. This is done by
+  checking the existing TAP interfaces in order to find a unique name for
+  the new TAP network interface.
+
+  In case this method is used in instance communication, the TAP
+  network interface names are of the form 'gnt.com.%d', where '%d' is
+  a unique number within the node. Otherwise, in case of the MacVTap
+  driver, the matching pattern is of the form 'gnt.macvtap.%d'.
+
+  @type instance_comm: boolean
+  @param instance_comm: whether this method will be used in instance
+      communication mode; if set to false, this method is used for
+      generating MacVTap interface names
 
   @rtype: string
-  @return: TAP network interface name, or the empty string if the
-           NIC is not used in instance communication
+  @return: TAP network interface name
 
   """
   result = utils.RunCmd(["ip", "link", "show"])
@@ -196,8 +204,12 @@ def GenerateTapName():
     if len(parts) < 2:
       raise errors.HypervisorError("Failed to parse TUN/TAP interfaces")
 
-    r = re.match(r"%s([0-9]+)" % constants.INSTANCE_COMMUNICATION_TAP_PREFIX,
-                 parts[1])
+    if instance_comm:
+      tap_prefix = constants.INSTANCE_COMMUNICATION_TAP_PREFIX
+    else:
+      tap_prefix = constants.MACVTAP_DEVICE_PREFIX
+
+    r = re.match(r"%s([0-9]+)" % tap_prefix, parts[1])
     if r is not None:
       idxs.add(int(r.group(1)))
 
@@ -206,7 +218,7 @@ def GenerateTapName():
   else:
     idx = 0
 
-  return "".join((constants.INSTANCE_COMMUNICATION_TAP_PREFIX, str(idx)))
+  return "".join((tap_prefix, str(idx)))
 
 
 def ConfigureNIC(cmd, instance, seq, nic, tap):
