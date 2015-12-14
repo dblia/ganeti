@@ -899,7 +899,8 @@ class XenHypervisor(hv_base.BaseHypervisor):
                                     result.output, stashed_config))
 
     for nic_seq, nic in enumerate(instance.nics):
-      if nic.name and nic.name.startswith("gnt.com."):
+      if (nic.name and
+          nic.name.startswith(constants.INSTANCE_COMMUNICATION_TAP_PREFIX)):
         _ConfigureNIC(instance, nic_seq, nic, nic.name)
 
   def StopInstance(self, instance, force=False, retry=False, name=None,

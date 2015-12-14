@@ -196,8 +196,8 @@ def GenerateTapName():
     if len(parts) < 2:
       raise errors.HypervisorError("Failed to parse TUN/TAP interfaces")
 
-    r = re.match(r"gnt\.com\.([0-9]+)", parts[1])
-
+    r = re.match(r"%s([0-9]+)" % constants.INSTANCE_COMMUNICATION_TAP_PREFIX,
+                 parts[1])
     if r is not None:
       idxs.add(int(r.group(1)))
 
@@ -206,7 +206,7 @@ def GenerateTapName():
   else:
     idx = 0
 
-  return "gnt.com.%d" % idx
+  return "".join((constants.INSTANCE_COMMUNICATION_TAP_PREFIX, str(idx)))
 
 
 def ConfigureNIC(cmd, instance, seq, nic, tap):

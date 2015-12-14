@@ -5463,6 +5463,9 @@ instanceCommunicationNetworkMode = nicModeRouted
 instanceCommunicationNicPrefix :: String
 instanceCommunicationNicPrefix = "ganeti:communication:"
 
+instanceCommunicationTapPrefix :: String
+instanceCommunicationTapPrefix = "gnt.com."
+
 -- | Parameters that should be protected
 --
 -- Python does not have a type system and can't automatically infer what should
