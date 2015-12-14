@@ -1763,6 +1763,24 @@ def _GetInstNicVLan(ctx, index, _):
     return _FS_UNAVAIL
 
 
+def _GetInstNicMacvtapMode(ctx, index, _):
+  """Get a NIC's macvtap mode.
+
+  @type ctx: L{InstanceQueryData}
+  @type index: int
+  @param index: NIC index
+
+  """
+  assert len(ctx.inst_nicparams) >= index
+
+  nicparams = ctx.inst_nicparams[index]
+
+  if nicparams[constants.NIC_MODE] == constants.NIC_MODE_MACVTAP:
+    return nicparams[constants.NIC_MACVTAP_MODE]
+  else:
+    return _FS_UNAVAIL
+
+
 def _GetInstAllNicNetworkNames(ctx, inst):
   """Get all network names for an instance.
 
@@ -1800,6 +1818,29 @@ def _GetInstAllNicVlans(ctx, inst):
     if nicp[constants.NIC_MODE] in \
           [constants.NIC_MODE_BRIDGED, constants.NIC_MODE_OVS]:
       result.append(nicp[constants.NIC_VLAN])
+    else:
+      result.append(None)
+
+  assert len(result) == len(inst.nics)
+
+  return result
+
+
+def _GetInstAllNicMacvtapModes(ctx, inst):
+  """Get all network macvtap modes for an instance.
+
+  @type ctx: L{InstanceQueryData}
+  @type inst: L{objects.Instance}
+  @param inst: Instance object
+
+  """
+  assert len(ctx.inst_nicparams) == len(inst.nics)
+
+  result = []
+
+  for nicp in ctx.inst_nicparams:
+    if nicp[constants.NIC_MODE] == constants.NIC_MODE_MACVTAP:
+      result.append(nicp[constants.NIC_MACVTAP_MODE])
     else:
       result.append(None)
 
