@@ -124,6 +124,7 @@ def ConnectNetwork(opts, args):
 
   network = args[0]
   nicparams = objects.FillDict(constants.NICC_DEFAULTS, opts.nicparams)
+  macvtap_mode = nicparams[constants.NIC_MACVTAP_MODE]
 
   groups = _GetDefaultGroups(cl, args[1:])
 
@@ -134,6 +135,7 @@ def ConnectNetwork(opts, args):
                                   network_mode=nicparams[constants.NIC_MODE],
                                   network_link=nicparams[constants.NIC_LINK],
                                   network_vlan=nicparams[constants.NIC_VLAN],
+                                  network_macvtap_mode=macvtap_mode,
                                   conflicts_check=opts.conflicts_check)
     SubmitOpCode(op, opts=opts, cl=cl)
 

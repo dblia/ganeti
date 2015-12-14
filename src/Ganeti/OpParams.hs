@@ -288,6 +288,7 @@ module Ganeti.OpParams
   , pNetworkMode
   , pNetworkLink
   , pNetworkVlan
+  , pNetworkMacvtapMode
   , pDryRun
   , pDebugLevel
   , pOpPriority
@@ -398,6 +399,7 @@ $(buildObject "INicParams" "inic"
   , optionalField $ simpleField C.inicLink   [t| NonEmptyString |]
   , optionalField $ simpleField C.inicName   [t| NonEmptyString |]
   , optionalField $ simpleField C.inicVlan   [t| String         |]
+  , optionalField $ simpleField C.inicMacvtapMode [t| String |]
   , optionalField $ simpleField C.inicBridge [t| NonEmptyString |]
   , optionalField $ simpleField C.inicNetwork [t| NonEmptyString |]
   ])
@@ -1895,6 +1897,11 @@ pNetworkVlan :: Field
 pNetworkVlan =
   withDoc "Network vlan when connecting to a group" .
   defaultField [| "" |] $ stringField "network_vlan"
+
+pNetworkMacvtapMode :: Field
+pNetworkMacvtapMode =
+  withDoc "Network macvtap mode when connecting to a group" .
+  defaultField [| "" |] $ stringField "network_macvtap_mode"
 
 pEnabledDataCollectors :: Field
 pEnabledDataCollectors =

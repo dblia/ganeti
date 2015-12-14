@@ -97,7 +97,7 @@ instance Arbitrary INicParams where
   arbitrary = INicParams <$> genMaybe genNameNE <*> genMaybe genName <*>
               genMaybe genNameNE <*> genMaybe genNameNE <*>
               genMaybe genNameNE <*> genMaybe genName <*>
-              genMaybe genNameNE <*> genMaybe genNameNE
+              genMaybe genName <*> genMaybe genNameNE <*> genMaybe genNameNE
 
 instance Arbitrary IDiskParams where
   arbitrary = IDiskParams <$> arbitrary <*> arbitrary <*>
@@ -519,7 +519,8 @@ instance Arbitrary OpCodes.OpCode where
           genMaybe (listOf genIPv4Address)
       "OP_NETWORK_CONNECT" ->
         OpCodes.OpNetworkConnect <$> genNameNE <*> genNameNE <*>
-          arbitrary <*> genNameNE <*> genPrintableAsciiString <*> arbitrary
+          arbitrary <*> genNameNE <*> genPrintableAsciiString <*>
+          genPrintableAsciiString <*> arbitrary
       "OP_NETWORK_DISCONNECT" ->
         OpCodes.OpNetworkDisconnect <$> genNameNE <*> genNameNE
       "OP_RESTRICTED_COMMAND" ->

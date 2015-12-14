@@ -38,6 +38,7 @@ from ganeti import objects
 from ganeti import utils
 from ganeti.cmdlib.base import LogicalUnit
 from ganeti.cmdlib.common import CheckNodeGroupInstances
+from ganeti.cmdlib.instance_utils import ComputeMacvtapModeNicParam
 
 
 def _BuildNetworkHookEnv(name, subnet, gateway, network6, gateway6,
@@ -456,6 +457,7 @@ class LUNetworkConnect(LogicalUnit):
     self.network_mode = self.op.network_mode
     self.network_link = self.op.network_link
     self.network_vlan = self.op.network_vlan
+    self.network_macvtap_mode = self.op.network_macvtap_mode
 
     self.network_uuid = self.cfg.LookupNetwork(self.network_name)
     self.group_uuid = self.cfg.LookupNodeGroup(self.group_name)
@@ -487,6 +489,7 @@ class LUNetworkConnect(LogicalUnit):
       "GROUP_NETWORK_MODE": self.network_mode,
       "GROUP_NETWORK_LINK": self.network_link,
       "GROUP_NETWORK_VLAN": self.network_vlan,
+      "GROUP_NETWORK_MACVTAP_MODE": self.network_macvtap_mode,
       }
     return ret
 
@@ -508,13 +511,21 @@ class LUNetworkConnect(LogicalUnit):
       constants.NIC_MODE: self.network_mode,
       constants.NIC_LINK: self.network_link,
       constants.NIC_VLAN: self.network_vlan,
+      constants.NIC_MACVTAP_MODE: self.network_macvtap_mode,
       }
 
+    if self.network_mode == constants.NIC_MODE_MACVTAP:
+      self.netparams[constants.NIC_MACVTAP_MODE] = \
+        ComputeMacvtapModeNicParam(self.network_macvtap_mode)
     objects.NIC.CheckParameterSyntax(self.netparams)
 
     self.group = self.cfg.GetNodeGroup(self.group_uuid)
     #if self.network_mode == constants.NIC_MODE_BRIDGED:
     #  _CheckNodeGroupBridgesExist(self, self.network_link, self.group_uuid)
+    #if self.network_mode == constants.NIC_MODE_MACVTAP:
+    #  TODO: the _CheckNodeGroupNetdevsExist function should be implemented
+    #        along with the _CheckNodeGroupBridgesExist equivalent
+    #  _CheckNodeGroupNetdevsExist(self, self.network_link, self.group_uuid)
     self.connected = False
     if self.network_uuid in self.group.networks:
       self.LogWarning("Network '%s' is already mapped to group '%s'" %
@@ -578,6 +589,8 @@ class LUNetworkDisconnect(LogicalUnit):
         "GROUP_NETWORK_MODE": self.netparams[constants.NIC_MODE],
         "GROUP_NETWORK_LINK": self.netparams[constants.NIC_LINK],
         "GROUP_NETWORK_VLAN": self.netparams[constants.NIC_VLAN],
+        "GROUP_NETWORK_MACVTAP_MODE":
+          self.netparams[constants.NIC_MACVTAP_MODE],
         })
     return ret
 
