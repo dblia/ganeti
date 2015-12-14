@@ -36,6 +36,7 @@ by a node reboot.  Run from cron or similar.
 
 """
 
+import re
 import os
 import os.path
 import sys
@@ -59,6 +60,7 @@ from ganeti import qlang
 from ganeti import ssconf
 from ganeti import ht
 from ganeti import pathutils
+from ganeti import hypervisor
 
 import ganeti.rapi.client # pylint: disable=W0611
 from ganeti.rapi.client import UsesRapiClient
@@ -342,6 +344,42 @@ def _CheckForOfflineNodes(nodes, instance):
 
   """
   return compat.any(nodes[node_name].offline for node_name in instance.snodes)
+
+
+def _CleanupStaleMacvtapDevs():
+  """Ensure that any stale macvtap NICs get cleaned up.
+
+  """
+  def _GetAllMacvtapDevs():
+    """Get all the macvtaps NICs on the current node."""
+    result = utils.RunCmd(["ip", "link", "show"])
+    if result.failed:
+      raise errors.CommandError("Failed to list TUN/TAP interfaces")
+
+    macvtaps = set()
+    for line in result.output.splitlines()[0::2]:
+      iface = line.split(": ")[1]
+      match = re.match(r"%s([0-9]+)" % constants.MACVTAP_DEVICE_PREFIX, iface)
+      if match:
+        macvtaps.add(match.group(0))
+    return macvtaps
+
+  hyper_list = ssconf.SimpleStore().GetHypervisorList()
+  for hv_name in hyper_list:
+    try:
+      hyper = hypervisor.GetHypervisor(hv_name)
+      macvtaps_in_use = hyper.ListInstancesMacvtapNICs()
+    except errors.HypervisorError, err:
+      logging.warning(str(err))
+      continue
+
+    stale = _GetAllMacvtapDevs() - set(macvtaps_in_use)
+    if stale:
+      logging.info("Removing stale MacVTap devs: %s", utils.CommaJoin(stale))
+      for macvtap in stale:
+        result = utils.RunCmd(["ip", "link", "delete", macvtap])
+        if result.failed:
+          logging.warning("Failed to delete stale MacVTap iface '%s'", macvtap)
 
 
 def _VerifyDisks(cl, uuid, nodes, instances):
@@ -688,6 +726,9 @@ def _GlobalWatcher(opts):
   """
   StartNodeDaemons()
   RunWatcherHooks()
+
+  # Ensure that stale macvtap devices get cleaned up
+  _CleanupStaleMacvtapDevs()
 
   # Run node maintenance in all cases, even if master, so that old masters can
   # be properly cleaned up
