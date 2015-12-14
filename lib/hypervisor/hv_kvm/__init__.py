@@ -875,6 +875,24 @@ class KVMHypervisor(hv_base.BaseHypervisor):
     """
     hv_base.ConfigureNIC([pathutils.KVM_IFUP, tap], instance, seq, nic, tap)
 
+  @staticmethod
+  def _UnconfigureNIC(instance, seq, nic, tap):
+    """Run the network un-configuration script for a specified NIC.
+
+    See L{hv_base.ConfigureNIC}.
+
+    @param instance: instance we're acting on
+    @type instance: instance object
+    @param seq: nic sequence number
+    @type seq: int
+    @param nic: nic we're acting on
+    @type nic: nic object
+    @param tap: the host's tap interface this NIC corresponds to
+    @type tap: str
+
+    """
+    hv_base.ConfigureNIC([pathutils.KVM_IFDOWN, tap], instance, seq, nic, tap)
+
   @classmethod
   def _SetProcessAffinity(cls, process_id, cpus):
     """Sets the affinity of a process to the given CPUs.
