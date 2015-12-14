@@ -894,6 +894,46 @@ class KVMHypervisor(hv_base.BaseHypervisor):
     hv_base.ConfigureNIC([pathutils.KVM_IFDOWN, tap], instance, seq, nic, tap)
 
   @classmethod
+  def _HandleInstanceNICs(cls, instance, conf_fn, runtime_info=None,
+                          skip_nic_modes=None):
+    """Handle NICs for the given instance.
+
+    This method {un}configures all NICs of the given instance. Depending on
+    the conf_fn function passed it either configures or un-configures the
+    instance NICs.
+
+    @type runtime_info: string
+    @param runtime_info: raw text data read from actual runtime file
+    @type skip_nic_modes: list
+    @param skip_nic_modes: list of NIC modes to skipped being configured
+    @type conf_fn: function
+    @param conf_fn: configuration function to be called on instance's NICs
+
+    """
+    if skip_nic_modes is None:
+      skip_nic_modes = []
+
+    _, kvm_nics, _, _ = cls._LoadKVMRuntime(instance.name,
+                                            serialized_runtime=runtime_info)
+
+    for nic_seq, nic in enumerate(kvm_nics):
+      # Skip if the given nic is already configured
+      if nic.nicparams[constants.NIC_MODE] in skip_nic_modes:
+        continue
+
+      try:
+        tap = utils.ReadFile(cls._InstanceNICFile(instance.name, nic_seq))
+      except EnvironmentError, err:
+        logging.warning("Failed to find host interface for %s NIC #%d: %s",
+                        instance.name, nic_seq, str(err))
+        continue
+
+      try:
+        conf_fn(instance, nic_seq, nic, tap)
+      except errors.HypervisorError, err:
+        logging.warning(str(err))
+
+  @classmethod
   def _SetProcessAffinity(cls, process_id, cpus):
     """Sets the affinity of a process to the given CPUs.
 
