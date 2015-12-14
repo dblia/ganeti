@@ -540,11 +540,11 @@ class LUInstanceSetParams(LogicalUnit):
     objects.NIC.CheckParameterSyntax(new_filled_params)
 
     new_mode = new_filled_params[constants.NIC_MODE]
-    if new_mode == constants.NIC_MODE_BRIDGED:
-      bridge = new_filled_params[constants.NIC_LINK]
-      msg = self.rpc.call_bridges_exist(pnode_uuid, [bridge]).fail_msg
+    if new_mode in [constants.NIC_MODE_BRIDGED, constants.NIC_MODE_MACVTAP]:
+      netdev = new_filled_params[constants.NIC_LINK], new_mode
+      msg = self.rpc.call_netdevs_exist(pnode_uuid, [netdev]).fail_msg
       if msg:
-        msg = "Error checking bridges on node '%s': %s" % \
+        msg = "Error checking network devices on node '%s': %s" % \
                 (self.cfg.GetNodeName(pnode_uuid), msg)
         if self.op.force:
           self.warn.append(msg)

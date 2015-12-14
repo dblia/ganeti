@@ -582,25 +582,29 @@ def CheckNodeFreeMemory(lu, node_uuid, reason, requested, hvname, hvparams):
   return free_mem
 
 
-def CheckInstanceBridgesExist(lu, instance, node_uuid=None):
-  """Check that the brigdes needed by an instance exist.
+def CheckInstanceNetdevsExist(lu, instance, node_uuid=None):
+  """Check that the network devices needed by an instance exist.
 
   """
   if node_uuid is None:
     node_uuid = instance.primary_node
-  CheckNicsBridgesExist(lu, instance.nics, node_uuid)
+  CheckNicsNetdevsExist(lu, instance.nics, node_uuid)
 
 
-def CheckNicsBridgesExist(lu, nics, node_uuid):
-  """Check that the brigdes needed by a list of nics exist.
+def CheckNicsNetdevsExist(lu, nics, node_uuid):
+  """Check that the network devices needed by a list of nics exist.
 
   """
+  netdev_list = []
   cluster = lu.cfg.GetClusterInfo()
   paramslist = [cluster.SimpleFillNIC(nic.nicparams) for nic in nics]
-  brlist = [params[constants.NIC_LINK] for params in paramslist
-            if params[constants.NIC_MODE] == constants.NIC_MODE_BRIDGED]
-  if brlist:
-    result = lu.rpc.call_bridges_exist(node_uuid, brlist)
+  for params in paramslist:
+    nic_mode = params[constants.NIC_MODE]
+    if nic_mode in [constants.NIC_MODE_BRIDGED, constants.NIC_MODE_MACVTAP]:
+      netdev_list.append((params[constants.NIC_LINK], nic_mode))
+
+  if netdev_list:
+    result = lu.rpc.call_netdevs_exist(node_uuid, netdev_list)
     result.Raise("Error checking bridges on destination node '%s'" %
                  lu.cfg.GetNodeName(node_uuid), prereq=True,
                  ecode=errors.ECODE_ENVIRON)

@@ -1325,7 +1325,8 @@ def VerifyNode(what, cluster_name, all_hvparams):
   if constants.NV_BRIDGES in what and vm_capable:
     result[constants.NV_BRIDGES] = [bridge
                                     for bridge in what[constants.NV_BRIDGES]
-                                    if not utils.BridgeExists(bridge)]
+                                    if not utils.NetdevExists(
+                                        bridge, constants.NIC_MODE_BRIDGED)]
 
   if what.get(constants.NV_ACCEPTED_STORAGE_PATHS) == my_name:
     result[constants.NV_ACCEPTED_STORAGE_PATHS] = \
@@ -2431,20 +2432,20 @@ def NodeVolumes():
   return all_devs
 
 
-def BridgesExist(bridges_list):
-  """Check if a list of bridges exist on the current node.
+def NetdevsExist(netdevs_list):
+  """Check if a list of network devices exist on the current node.
 
   @rtype: boolean
   @return: C{True} if all of them exist, C{False} otherwise
 
   """
   missing = []
-  for bridge in bridges_list:
-    if not utils.BridgeExists(bridge):
-      missing.append(bridge)
+  for netdev, netdev_type in netdevs_list:
+    if not utils.NetdevExists(netdev, netdev_type):
+      missing.append(netdev)
 
   if missing:
-    _Fail("Missing bridges %s", utils.CommaJoin(missing))
+    _Fail("Missing netdevs %s", utils.CommaJoin(missing))
 
 
 def GetInstanceListForHypervisor(hname, hvparams=None,

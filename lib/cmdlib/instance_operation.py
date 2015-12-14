@@ -50,7 +50,7 @@ from ganeti.cmdlib.common import INSTANCE_ONLINE, INSTANCE_DOWN, \
 from ganeti.cmdlib.instance_storage import StartInstanceDisks, \
   ShutdownInstanceDisks, ImageDisks
 from ganeti.cmdlib.instance_utils import BuildInstanceHookEnvByObject, \
-  CheckInstanceBridgesExist, CheckNodeFreeMemory, UpdateMetadata
+  CheckInstanceNetdevsExist, CheckNodeFreeMemory, UpdateMetadata
 from ganeti.hypervisor import hv_base
 
 
@@ -146,8 +146,8 @@ class LUInstanceStartup(LogicalUnit):
       bep = self.cfg.GetClusterInfo().FillBE(self.instance)
       bep.update(self.op.beparams)
 
-      # check bridges existence
-      CheckInstanceBridgesExist(self, self.instance)
+      # check netdevs existence
+      CheckInstanceNetdevsExist(self, self.instance)
 
       remote_info = self.rpc.call_instance_info(
           self.instance.primary_node, self.instance.name,
@@ -512,8 +512,8 @@ class LUInstanceReboot(LogicalUnit):
     CheckInstanceState(self, self.instance, INSTANCE_ONLINE)
     CheckNodeOnline(self, self.instance.primary_node)
 
-    # check bridges existence
-    CheckInstanceBridgesExist(self, self.instance)
+    # check netdevs existence
+    CheckInstanceNetdevsExist(self, self.instance)
 
   def Exec(self, feedback_fn):
     """Reboot the instance.

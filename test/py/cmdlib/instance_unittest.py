@@ -2138,7 +2138,7 @@ class TestLUInstanceSetParams(CmdlibTestCase):
         raise AssertionError()
     self.rpc.call_instance_info.side_effect = _InstanceInfo
 
-    self.rpc.call_bridges_exist.return_value = \
+    self.rpc.call_netdevs_exist.return_value = \
       self.RpcResultsBuilder() \
         .CreateSuccessfulNodeResult(self.master, True)
 

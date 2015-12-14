@@ -73,7 +73,7 @@ from ganeti.cmdlib.instance_utils import \
   CheckHostnameSane, CheckOpportunisticLocking, \
   ComputeFullBeParams, ComputeNics, GetClusterDomainSecret, \
   CheckInstanceExistence, CreateInstanceAllocRequest, BuildInstanceHookEnv, \
-  NICListToTuple, CheckNicsBridgesExist, CheckCompressionTool, \
+  NICListToTuple, CheckNicsNetdevsExist, CheckCompressionTool, \
   ComputeMacvtapModeNicParam
 import ganeti.masterd.instance
 
@@ -1128,7 +1128,7 @@ class LUInstanceCreate(LogicalUnit):
     CheckOSParams(self, True, node_uuids, self.op.os_type, self.os_full,
                   self.op.force_variant)
 
-    CheckNicsBridgesExist(self, self.nics, self.pnode.uuid)
+    CheckNicsNetdevsExist(self, self.nics, self.pnode.uuid)
 
     CheckCompressionTool(self, self.op.compress)
 

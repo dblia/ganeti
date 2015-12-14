@@ -245,16 +245,25 @@ def ListVolumeGroups():
   return retval
 
 
-def BridgeExists(bridge):
-  """Check whether the given bridge exists in the system
+def NetdevExists(netdev, netdev_type):
+  """Check whether the given network devices exist in the system.
 
-  @type bridge: str
-  @param bridge: the bridge name to check
+  This function checks for bridges and macvtap devices existence
+  in the system using sysfs.
+
+  @type netdev: str
+  @param netdev: the network device name to check
+  @type netdev_type: str
+  @param netdev_type: the network device type to check
+
   @rtype: boolean
   @return: True if it does
 
   """
-  return os.path.isdir("/sys/class/net/%s/bridge" % bridge)
+  if netdev_type == constants.NIC_MODE_BRIDGED:
+    return os.path.isdir("/sys/class/net/%s/bridge" % netdev)
+  elif netdev_type == constants.NIC_MODE_MACVTAP:
+    return os.path.isdir("/sys/class/net/%s" % netdev)
 
 
 def TryConvert(fn, val):

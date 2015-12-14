@@ -46,7 +46,7 @@ from ganeti.cmdlib.instance_storage import CheckDiskConsistency, \
   ExpandCheckDisks, ShutdownInstanceDisks, AssembleInstanceDisks
 from ganeti.cmdlib.instance_utils import BuildInstanceHookEnvByObject, \
   CheckTargetNodeIPolicy, ReleaseLocks, CheckNodeNotDrained, \
-  CopyLockList, CheckNodeFreeMemory, CheckInstanceBridgesExist
+  CopyLockList, CheckNodeFreeMemory, CheckInstanceNetdevsExist
 
 import ganeti.masterd.instance
 
@@ -429,8 +429,8 @@ class TLMigrateInstance(Tasklet):
                       " to failover")
       self.failover = True
 
-    # check bridge existance
-    CheckInstanceBridgesExist(self.lu, self.instance,
+    # check netdevs existance
+    CheckInstanceNetdevsExist(self.lu, self.instance,
                               node_uuid=target_node_uuid)
 
     if not self.cleanup:

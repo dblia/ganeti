@@ -61,7 +61,7 @@ from ganeti.cmdlib.instance_utils import \
   CheckNodeNotDrained, RemoveInstance, CopyLockList, \
   CheckNodeVmCapable, CheckTargetNodeIPolicy, \
   GetInstanceInfoText, RemoveDisks, CheckNodeFreeMemory, \
-  CheckInstanceBridgesExist, \
+  CheckInstanceNetdevsExist, \
   CheckInstanceExistence, \
   CheckHostnameSane, CheckOpportunisticLocking, ComputeFullBeParams, \
   ComputeNics, CreateInstanceAllocRequest
@@ -431,8 +431,8 @@ class LUInstanceMove(LogicalUnit):
       self.LogInfo("Not checking memory on the secondary node as"
                    " instance will not be started")
 
-    # check bridge existance
-    CheckInstanceBridgesExist(self, self.instance, node_uuid=target_node.uuid)
+    # check netdevs existance
+    CheckInstanceNetdevsExist(self, self.instance, node_uuid=target_node.uuid)
 
   def Exec(self, feedback_fn):
     """Move an instance.

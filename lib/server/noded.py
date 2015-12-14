@@ -593,15 +593,15 @@ class NodeRequestHandler(http.server.HttpServerHandler):
     (su_name, su_args, name, op) = params
     return container.GetStorage(su_name, *su_args).Execute(name, op)
 
-  # bridge  --------------------------
+  # netdevs  --------------------------
 
   @staticmethod
-  def perspective_bridges_exist(params):
-    """Check if all bridges given exist on this node.
+  def perspective_netdevs_exist(params):
+    """Check if all network devices given exist on this node.
 
     """
-    bridges_list = params[0]
-    return backend.BridgesExist(bridges_list)
+    netdevs_list = params[0]
+    return backend.NetdevsExist(netdevs_list)
 
   # instance  --------------------------
 

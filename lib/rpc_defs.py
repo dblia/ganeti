@@ -587,9 +587,10 @@ _MISC_CALLS = [
     ], None, None, "Gets the logical volumes present in a given volume group"),
   ("vg_list", MULTI, None, constants.RPC_TMO_URGENT, [], None, None,
    "Gets the volume group list"),
-  ("bridges_exist", SINGLE, None, constants.RPC_TMO_URGENT, [
-    ("bridges_list", None, "Bridges which must be present on remote node"),
-    ], None, None, "Checks if a node has all the bridges given"),
+  ("netdevs_exist", SINGLE, None, constants.RPC_TMO_URGENT, [
+    ("netdevs_list", None,
+     "Network devices which must be present on remote node"),
+    ], None, None, "Checks if a node has all the network devices given"),
   ("etc_hosts_modify", SINGLE, None, constants.RPC_TMO_NORMAL, [
     ("mode", None,
      "Mode to operate; currently L{constants.ETC_HOSTS_ADD} or"
