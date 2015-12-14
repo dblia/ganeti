@@ -64,7 +64,7 @@ from ganeti.cmdlib.instance_utils import BuildInstanceHookEnvByObject, \
   NICToTuple, CheckNodeNotDrained, CopyLockList, \
   ReleaseLocks, CheckNodeVmCapable, CheckTargetNodeIPolicy, \
   GetInstanceInfoText, RemoveDisks, CheckNodeFreeMemory, \
-  UpdateMetadata, CheckForConflictingIp, \
+  UpdateMetadata, CheckForConflictingIp, ComputeMacvtapModeNicParam, \
   PrepareContainerMods, ComputeInstanceCommunicationNIC, \
   ApplyContainerMods, ComputeIPolicyInstanceSpecViolation, \
   CheckNodesPhysicalCPUs
@@ -525,6 +525,14 @@ class LUInstanceSetParams(LogicalUnit):
       new_params = dict(netparams)
     else:
       new_params = GetUpdatedParams(old_params, update_params_dict)
+
+    # In case of a modification of a NIC in MacVTap connection mode,
+    # check and properly compute the macvtap_mode nicparam.
+    mode = new_params.get(constants.NIC_MODE, None)
+    if mode == constants.NIC_MODE_MACVTAP:
+      req_macvtap_mode = update_params_dict.get(constants.NIC_MACVTAP_MODE, "")
+      new_params[constants.NIC_MACVTAP_MODE] = \
+          ComputeMacvtapModeNicParam(req_macvtap_mode)
 
     utils.ForceDictType(new_params, constants.NICS_PARAMETER_TYPES)
 

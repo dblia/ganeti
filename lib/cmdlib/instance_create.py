@@ -73,7 +73,8 @@ from ganeti.cmdlib.instance_utils import \
   CheckHostnameSane, CheckOpportunisticLocking, \
   ComputeFullBeParams, ComputeNics, GetClusterDomainSecret, \
   CheckInstanceExistence, CreateInstanceAllocRequest, BuildInstanceHookEnv, \
-  NICListToTuple, CheckNicsBridgesExist, CheckCompressionTool
+  NICListToTuple, CheckNicsBridgesExist, CheckCompressionTool, \
+  ComputeMacvtapModeNicParam
 import ganeti.masterd.instance
 
 
@@ -720,7 +721,7 @@ class LUInstanceCreate(LogicalUnit):
       node_names.append(self.op.snode)
     self.LogInfo("Nodes of instance %s: %s", name, node_names)
 
-  def CheckPrereq(self): # pylint: disable=R0914
+  def CheckPrereq(self): # pylint: disable=R0914,R0915
     """Check prerequisites.
 
     """
@@ -874,6 +875,15 @@ class LUInstanceCreate(LogicalUnit):
     for nic in self.nics:
       if nic.mac in (constants.VALUE_AUTO, constants.VALUE_GENERATE):
         nic.mac = self.cfg.GenerateMAC(nic.network, self.proc.GetECId())
+
+      #### macvtap_mode validation
+      # In case of a NIC in MacVTap connection mode, we validate and properly
+      # compute the macvtap_mode nicparam.
+      mode = nic.nicparams.get(constants.INIC_MODE, None)
+      if mode == constants.NIC_MODE_MACVTAP:
+        macvtap_mode = nic.nicparams.get(constants.NIC_MACVTAP_MODE, "")
+        nic.nicparams[constants.NIC_MACVTAP_MODE] = \
+          ComputeMacvtapModeNicParam(macvtap_mode)
 
     #### allocator run
 
