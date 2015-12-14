@@ -45,5 +45,6 @@ fi
 if ! is_instance_communication_tap; then
   setup_bridge
   setup_ovs
+  setup_macvtap
   setup_route
 fi
