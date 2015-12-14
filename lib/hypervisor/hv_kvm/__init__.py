@@ -822,6 +822,9 @@ class KVMHypervisor(hv_base.BaseHypervisor):
     """Removes an instance's rutime sockets/files/dirs.
 
     """
+    # Firstly, unconfigure the instances' NICs
+    cls._HandleInstanceNICs(instance, conf_fn=cls._UnconfigureNIC)
+
     utils.RemoveFile(pidfile)
     utils.RemoveFile(cls._InstanceMonitor(instance.name))
     utils.RemoveFile(cls._InstanceSerial(instance.name))
@@ -2254,6 +2257,8 @@ class KVMHypervisor(hv_base.BaseHypervisor):
       self._CallMonitorCommand(instance.name, command)
     elif dev_type == constants.HOTPLUG_TARGET_NIC:
       self.qmp.HotDelNic(kvm_devid)
+      tap = utils.ReadFile(self._InstanceNICFile(instance.name, seq))
+      self._UnconfigureNIC(instance, seq, device, tap)
       utils.RemoveFile(self._InstanceNICFile(instance.name, seq))
     self._VerifyHotplugCommand(instance, kvm_devid, False)
     index = _DEVICE_RUNTIME_INDEX[dev_type]
@@ -2397,6 +2402,7 @@ class KVMHypervisor(hv_base.BaseHypervisor):
     # ...now we can safely call StopInstance...
     if not self.StopInstance(instance):
       self.StopInstance(instance, force=True)
+    self._HandleInstanceNICs(instance, conf_fn=self._UnconfigureNIC)
     # ...and finally we can save it again, and execute it...
     self._SaveKVMRuntime(instance, kvm_runtime)
     kvmpath = instance.hvparams[constants.HV_KVM_PATH]
@@ -2442,27 +2448,14 @@ class KVMHypervisor(hv_base.BaseHypervisor):
 
     """
     if success:
-      kvm_runtime = self._LoadKVMRuntime(instance.name, serialized_runtime=info)
-      kvm_nics = kvm_runtime[1]
-
-      for nic_seq, nic in enumerate(kvm_nics):
-        if nic.nicparams[constants.NIC_MODE] != constants.NIC_MODE_ROUTED:
-          # Bridged/OVS interfaces have already been configured
-          continue
-        try:
-          tap = utils.ReadFile(self._InstanceNICFile(instance.name, nic_seq))
-        except EnvironmentError, err:
-          logging.warning("Failed to find host interface for %s NIC #%d: %s",
-                          instance.name, nic_seq, str(err))
-          continue
-        try:
-          self._ConfigureNIC(instance, nic_seq, nic, tap)
-        except errors.HypervisorError, err:
-          logging.warning(str(err))
-
+      # bridged interfaces have already been configured, so we skip them
+      self._HandleInstanceNICs(instance, conf_fn=self._ConfigureNIC,
+                               runtime_info=info,
+                               skip_nic_modes=[constants.NIC_MODE_BRIDGED])
       self._WriteKVMRuntime(instance.name, info)
     else:
       self.StopInstance(instance, force=True)
+      self._HandleInstanceNICs(instance, conf_fn=self._UnconfigureNIC)
 
   def MigrateInstance(self, cluster_name, instance, target, live):
     """Migrate an instance to a target node.
