@@ -59,6 +59,10 @@ Node operations
 The watcher will restart any down daemons that are appropriate for
 the current node.
 
+Also, it will delete any stale macvtap devices found for the current
+node. A stale macvtap device may created in case an instance is not
+properly stopped, like a user internal shutdown.
+
 In addition, it will execute any scripts which exist under the
 "watcher" directory in the Ganeti hooks directory
 (``@SYSCONFDIR@/ganeti/hooks``). This should be used for lightweight

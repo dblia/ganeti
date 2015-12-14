@@ -390,17 +390,22 @@ comma-separated list of key=value pairs with the following supported
 keys:
 
 mode
-    The default NIC mode, one of ``routed``, ``bridged`` or
+    The default NIC mode, one of ``routed``, ``bridged``, ``macvtap`` or
     ``openvswitch``.
 
 link
-    In ``bridged`` or ``openvswitch`` mode the default interface where
-    to attach NICs. In ``routed`` mode it represents an
+    In ``bridged``, ``macvtap`` or ``openvswitch`` mode the default
+    interface where to attach NICs. In ``routed`` mode it represents an
     hypervisor-vif-script dependent value to allow different instance
     groups. For example under the KVM default network script it is
     interpreted as a routing table number or name. Openvswitch support
     is also hypervisor dependent and currently works for the default KVM
     network script. Under Xen a custom network script must be provided.
+
+mvtap_mode
+    For the ``macvtap`` mode, this parameter specifies the operation
+    mode of the macvtap device. Supported modes are the VEPA, bridge,
+    private, and passthru modes.
 
 The ``-D (--disk-parameters)`` option allows you to set the default disk
 template parameters at cluster level. The format used for this option is

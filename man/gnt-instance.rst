@@ -154,16 +154,16 @@ ip
     any other instance until it gets released.
 
 mode
-    specifies the connection mode for this NIC: routed, bridged or
-    openvswitch.
+    specifies the connection mode for this NIC: routed, bridged,
+    openvswitch or macvtap.
 
 link
-    in bridged or openvswitch mode specifies the interface to attach
-    this NIC to, in routed mode it's intended to differentiate between
-    different routing tables/instance groups (but the meaning is
+    in bridged, openvswitch or macvtap mode specifies the interface to
+    attach this NIC to, in routed mode it's intended to differentiate
+    between different routing tables/instance groups (but the meaning is
     dependent on the network script, see **gnt-cluster**\(8) for more
-    details). Note that openvswitch support is also hypervisor
-    dependent.
+    details). Note that openvswitch and macvtap support are also
+    hypervisor dependent.
 
 network
     derives the mode and the link from the settings of the network
@@ -182,6 +182,11 @@ vlan
    connected to. To connect as an access port use ``n`` or ``.n`` with
    **n** being the VLAN ID. To connect as an trunk port use ``:n[:n]``.
    A hybrid port can be created with ``.n:n[:n]``
+
+mvtap_mode
+   in macvtap mode specifies the operation mode of the device driver.
+   There are four modes in which a macvtap NIC can operate on, i.e.,
+   the VEPA, bridge, private, and passthru mode.
 
 Of these "mode" and "link" are NIC parameters, and inherit their
 default at cluster level.  Alternatively, if no network is desired for
