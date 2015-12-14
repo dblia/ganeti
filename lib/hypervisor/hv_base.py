@@ -359,6 +359,17 @@ class BaseHypervisor(object):
     """Get the list of running instances."""
     raise NotImplementedError
 
+  # pylint: disable=R0201,W0613
+  def ListInstancesMacvtapNICs(self, instances=None):
+    """Get a list with macvtap NICs of the given instances.
+
+    @type instances: list
+    @param instances: instances names to get their macvtap NICs (if any)
+
+    """
+    raise errors.HypervisorError("Macvtap functionality is not supported by"
+                                 " this hypervisor")
+
   def GetInstanceInfo(self, instance_name, hvparams=None):
     """Get instance properties.
 

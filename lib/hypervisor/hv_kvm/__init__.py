@@ -1065,6 +1065,33 @@ class KVMHypervisor(hv_base.BaseHypervisor):
         result.append(name)
     return result
 
+  def ListInstancesMacvtapNICs(self, instances=None):
+    """Get a list with mactap NICs of the given instances.
+
+    @type instances: list
+    @param instances: names of instances to get their macvtap NICs (if any)
+
+    """
+    if instances is None:
+      instances = self.ListInstances()
+
+    result = []
+    for inst_name in instances:
+      _, kvm_nics, _, _ = self._LoadKVMRuntime(inst_name)
+
+      for nic_seq, nic in enumerate(kvm_nics):
+        if nic.nicparams[constants.NIC_MODE] != constants.NIC_MODE_MACVTAP:
+          continue
+
+        try:
+          macvtap = utils.ReadFile(self._InstanceNICFile(inst_name, nic_seq))
+          result.append(macvtap)
+        except EnvironmentError, err:
+          logging.warning("Failed to find host interface for %s NIC #%d: %s",
+                          inst_name, nic_seq, str(err))
+
+    return result
+
   @classmethod
   def _IsUserShutdown(cls, instance_name):
     return os.path.exists(cls._InstanceShutdownMonitor(instance_name))
