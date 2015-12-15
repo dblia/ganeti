@@ -66,7 +66,7 @@ from ganeti.utils import wrapper as utils_wrapper
 
 from ganeti.hypervisor.hv_kvm.monitor import QmpConnection, QmpMessage, \
                                              MonitorSocket
-from ganeti.hypervisor.hv_kvm.netdev import OpenTap
+from ganeti.hypervisor.hv_kvm.netdev import OpenTap, OpenMacVTap
 
 
 _KVM_NETWORK_SCRIPT = pathutils.CONF_DIR + "/kvm-vif-bridge"
@@ -859,6 +859,32 @@ class KVMHypervisor(hv_base.BaseHypervisor):
         utils.RenameFile(chroot_dir, new_chroot_dir)
       else:
         raise
+
+  def _OpenTapHelper(self, nic, features=None):
+    """Helper function to open a new tap/macvtap device.
+
+    This is actually a wrapper over the netdev's OpenTap and OpenMacVTap
+    methods, that create a new tap/macvtap device depending on the NIC
+    mode and return its file descriptor.
+
+    @see: L{netdev.OpenTap} and L{netdev.OpenMacVTap} for more details
+
+    @type nic: L{objects.NIC}
+    @param nic: NIC object we're acting on
+
+    @rtype: tuple
+    @return: (ifname, [tapfds], [vhostfds])
+
+    """
+    mode = nic.nicparams.get(constants.NIC_MODE, None)
+    if mode == constants.NIC_MODE_MACVTAP:
+      return OpenMacVTap(self._GenerateKvmTapName(nic),
+                         nic.nicparams[constants.NIC_LINK],
+                         nic.mac,
+                         nic.nicparams[constants.NIC_MACVTAP_MODE],
+                         features=features)
+    else:
+      return OpenTap(name=self._GenerateKvmTapName(nic), features=features)
 
   @staticmethod
   def _ConfigureNIC(instance, seq, nic, tap):
