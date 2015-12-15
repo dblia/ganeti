@@ -2326,7 +2326,7 @@ class KVMHypervisor(hv_base.BaseHypervisor):
 
     return kvm_device.hvinfo
 
-  def HotModDevice(self, instance, dev_type, device, _, seq):
+  def HotModDevice(self, instance, dev_type, old_dev, new_dev, _, seq):
     """ Helper method for hot-mod device
 
     It gets device info from runtime file, generates the device name and
@@ -2335,8 +2335,8 @@ class KVMHypervisor(hv_base.BaseHypervisor):
     """
     if dev_type == constants.HOTPLUG_TARGET_NIC:
       # putting it back in the same bus and slot
-      device.hvinfo = self.HotDelDevice(instance, dev_type, device, _, seq)
-      self.HotAddDevice(instance, dev_type, device, _, seq)
+      new_dev.hvinfo = self.HotDelDevice(instance, dev_type, old_dev, _, seq)
+      self.HotAddDevice(instance, dev_type, new_dev, _, seq)
 
   @classmethod
   def _ParseKVMVersion(cls, text):

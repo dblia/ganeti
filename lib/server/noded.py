@@ -651,15 +651,19 @@ class NodeRequestHandler(http.server.HttpServerHandler):
     """Hotplugs device to a running instance.
 
     """
-    (idict, action, dev_type, ddict, extra, seq) = params
+    (idict, action, dev_type, old_ddict, new_ddict, extra, seq) = params
+    old_dev = None
     instance = objects.Instance.FromDict(idict)
     if dev_type == constants.HOTPLUG_TARGET_DISK:
-      device = objects.Disk.FromDict(ddict)
+      new_dev = objects.Disk.FromDict(new_ddict)
     elif dev_type == constants.HOTPLUG_TARGET_NIC:
-      device = objects.NIC.FromDict(ddict)
+      if isinstance(old_ddict, dict):
+        old_dev = objects.NIC.FromDict(old_ddict)
+      new_dev = objects.NIC.FromDict(new_ddict)
     else:
       assert dev_type in constants.HOTPLUG_ALL_TARGETS
-    return backend.HotplugDevice(instance, action, dev_type, device, extra, seq)
+    return backend.HotplugDevice(instance, action, dev_type, old_dev, new_dev,
+                                 extra, seq)
 
   @staticmethod
   def perspective_hotplug_supported(params):

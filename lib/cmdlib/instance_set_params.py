@@ -1563,12 +1563,13 @@ class LUInstanceSetParams(LogicalUnit):
       meta_disks.append(disk.children[1])
     RemoveDisks(self, self.instance, disks=meta_disks)
 
-  def _HotplugDevice(self, action, dev_type, device, extra, seq):
+  def _HotplugDevice(self, action, dev_type, old_dev, new_dev, extra, seq):
     self.LogInfo("Trying to hotplug device...")
     msg = "hotplug:"
     result = self.rpc.call_hotplug_device(self.instance.primary_node,
                                           self.instance, action, dev_type,
-                                          (device, self.instance),
+                                          (old_dev, self.instance),
+                                          (new_dev, self.instance),
                                           extra, seq)
     if result.fail_msg:
       self.LogWarning("Could not hotplug device: %s" % result.fail_msg)
@@ -1636,7 +1637,7 @@ class LUInstanceSetParams(LogicalUnit):
         _, link_name, uri = result.payload
         msg = self._HotplugDevice(constants.HOTPLUG_ACTION_ADD,
                                   constants.HOTPLUG_TARGET_DISK,
-                                  disk, (link_name, uri), idx)
+                                  None, disk, (link_name, uri), idx)
         changes.append(("disk/%d" % idx, msg))
 
     return (disk, changes)
@@ -1695,7 +1696,7 @@ class LUInstanceSetParams(LogicalUnit):
       _, link_name, uri = payloads[0]
       msg = self._HotplugDevice(constants.HOTPLUG_ACTION_ADD,
                                 constants.HOTPLUG_TARGET_DISK,
-                                disk, (link_name, uri), idx)
+                                None, disk, (link_name, uri), idx)
       changes.append(("disk/%d" % idx, msg))
 
     return (disk, changes)
@@ -1741,7 +1742,7 @@ class LUInstanceSetParams(LogicalUnit):
     if self.op.hotplug:
       hotmsg = self._HotplugDevice(constants.HOTPLUG_ACTION_REMOVE,
                                    constants.HOTPLUG_TARGET_DISK,
-                                   root, None, idx)
+                                   None, root, None, idx)
       ShutdownInstanceDisks(self, self.instance, [root])
 
     RemoveDisks(self, self.instance, disks=[root])
@@ -1766,7 +1767,7 @@ class LUInstanceSetParams(LogicalUnit):
     if self.op.hotplug:
       hotmsg = self._HotplugDevice(constants.HOTPLUG_ACTION_REMOVE,
                                    constants.HOTPLUG_TARGET_DISK,
-                                   root, None, idx)
+                                   None, root, None, idx)
 
     # Always shutdown the disk before detaching.
     ShutdownInstanceDisks(self, self.instance, [root])
@@ -1821,7 +1822,7 @@ class LUInstanceSetParams(LogicalUnit):
     if self.op.hotplug:
       msg = self._HotplugDevice(constants.HOTPLUG_ACTION_ADD,
                                 constants.HOTPLUG_TARGET_NIC,
-                                nobj, None, idx)
+                                None, nobj, None, idx)
       changes.append(("nic.%d" % idx, msg))
 
     return (nobj, changes)
@@ -1831,6 +1832,7 @@ class LUInstanceSetParams(LogicalUnit):
 
     """
     changes = []
+    old_nic = copy.deepcopy(nic)
 
     for key in [constants.INIC_MAC, constants.INIC_IP, constants.INIC_NAME]:
       if key in params:
@@ -1852,7 +1854,7 @@ class LUInstanceSetParams(LogicalUnit):
     if self.op.hotplug:
       msg = self._HotplugDevice(constants.HOTPLUG_ACTION_MODIFY,
                                 constants.HOTPLUG_TARGET_NIC,
-                                nic, None, idx)
+                                old_nic, nic, None, idx)
       changes.append(("nic/%d" % idx, msg))
 
     return changes
@@ -1861,7 +1863,7 @@ class LUInstanceSetParams(LogicalUnit):
     if self.op.hotplug:
       return self._HotplugDevice(constants.HOTPLUG_ACTION_REMOVE,
                                  constants.HOTPLUG_TARGET_NIC,
-                                 nic, None, idx)
+                                 None, nic, None, idx)
 
   def Exec(self, feedback_fn):
     """Modifies an instance.

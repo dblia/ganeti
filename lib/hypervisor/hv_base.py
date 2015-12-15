@@ -773,7 +773,7 @@ class BaseHypervisor(object):
     raise errors.HotplugError("Hotplug is not supported by this hypervisor")
 
   # pylint: disable=R0201,W0613
-  def HotModDevice(self, instance, dev_type, device, extra, seq):
+  def HotModDevice(self, instance, dev_type, old_dev, new_dev, extra, seq):
     """Hot-mod a device.
 
     """

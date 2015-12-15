@@ -3170,18 +3170,21 @@ def GetMigrationStatus(instance):
     _Fail("Failed to get migration status: %s", err, exc=True)
 
 
-def HotplugDevice(instance, action, dev_type, device, extra, seq):
+def HotplugDevice(instance, action, dev_type, old_dev, new_dev, extra, seq):
   """Hotplug a device
 
   Hotplug is currently supported only for KVM Hypervisor.
+
   @type instance: L{objects.Instance}
   @param instance: the instance to which we hotplug a device
   @type action: string
   @param action: the hotplug action to perform
   @type dev_type: string
   @param dev_type: the device type to hotplug
-  @type device: either L{objects.NIC} or L{objects.Disk}
-  @param device: the device object to hotplug
+  @type old_dev: either L{objects.NIC} or L{objects.Disk}
+  @param old_dev: the device object to hotplug
+  @type new_dev: either L{objects.NIC} or L{objects.Disk}
+  @param new_dev: the device object to hotplug
   @type extra: tuple
   @param extra: extra info used for disk hotplug (disk link, drive uri)
   @type seq: int
@@ -3196,15 +3199,13 @@ def HotplugDevice(instance, action, dev_type, device, extra, seq):
     _Fail("Hotplug is not supported: %s", err)
 
   if action == constants.HOTPLUG_ACTION_ADD:
-    fn = hyper.HotAddDevice
+    return hyper.HotAddDevice(instance, dev_type, new_dev, extra, seq)
   elif action == constants.HOTPLUG_ACTION_REMOVE:
-    fn = hyper.HotDelDevice
+    return hyper.HotDelDevice(instance, dev_type, new_dev, extra, seq)
   elif action == constants.HOTPLUG_ACTION_MODIFY:
-    fn = hyper.HotModDevice
+    return hyper.HotModDevice(instance, dev_type, old_dev, new_dev, extra, seq)
   else:
     assert action in constants.HOTPLUG_ALL_ACTIONS
-
-  return fn(instance, dev_type, device, extra, seq)
 
 
 def HotplugSupported(instance):
