@@ -112,7 +112,7 @@ exists, otherwise the operation will fail. If no link is specified, the
 cluster-wide default NIC `link` param will be used instead.
 
 We propose the MacVTap mode to be configurable, and so the nicparams
-object will be extended with an extra slot named ``mvtap_mode``. This
+object will be extended with an extra slot named ``macvtap_mode``. This
 parameter will only be used if the network mode is set to MacVTap since
 it does not make sense in other modes, similarly to the `vlan` slot of
 the `openvswitch` mode.
@@ -125,7 +125,7 @@ Network connection
 
 ::
 
-  gnt-network connect -N mode=macvtap,link=eth0,mvtap_mode=bridge vtap-net vtap_group
+  gnt-network connect -N mode=macvtap,link=eth0,macvtap_mode=bridge vtap-net vtap_group
 
 Network listing
 ~~~~~~~~~~~~~~~
@@ -161,7 +161,7 @@ Network information
   externally reserved IPs:
     192.168.100.0, 192.168.100.1, 192.168.100.15
   connected to node groups:
-    vtap_group (mode:macvtap link:eth0 vlan: mvtap_mode:bridge)
+    vtap_group (mode:macvtap link:eth0 vlan: macvtap_mode:bridge)
   used by 2 instances:
     inst1.example.com: 0:192.168.100.2
     inst2.example.com: 0:192.168.100.3
@@ -171,11 +171,11 @@ Hypervisor changes
 ------------------
 
 A new method will be introduced in the KVM's `netdev.py` module, named
-``OpenVTap``, similar to the ``OpenTap`` method, that will be
+``OpenMacVTap``, similar to the ``OpenTap`` method, that will be
 responsible for creating a MacVTap device using the `ip-link` command,
 and returning its file descriptor. The ``OpenVtap`` method will receive
 as arguments the network's `link`, the mode of the MacVTap device
-(``mvtap_mode``), and also the ``interface name`` of the device to be
+(``macvtap_mode``), and also the ``interface name`` of the device to be
 created, otherwise we will not be able to retrieve it, and so opening
 the created device.
 
@@ -186,7 +186,7 @@ adapted to our needs. This method is actually a wrapper over the
 ``GenerateTapName`` method which currently is being used to generate TAP
 interface names for NICs meant to be used in instance communication
 using the ``gnt.com`` prefix. We propose extending this method to
-generate names for the MacVTap interface too, using the ``vtap`` prefix.
+generate names for MacVTap NICs too, using the ``gnt.macvtap.`` prefix.
 To do so, we could add an extra boolean argument in that method, named
 `inst_comm`, to differentiate the two cases, so that the method will
 return the appropriate name depending on its usage. This argument will
@@ -200,9 +200,9 @@ the `ip-link` command. The only drawback seems to be the `vnet_hdr`
 feature modification. For a MacVTap device this flag is enabled by
 default, and it can not be disabled if a user requests to.
 
-A last hypervisor change will be the introduction of a new method named
-``_RemoveStaleMacvtapDevs`` that will remove any remaining MacVTap
-devices, and which is detailed in the following section.
+A last hypervisor change will be the introduction of a new method that
+will be used to un-configure instances' NICs and subsequently the
+persistent MacVTap devices, and which is detailed in the next section.
 
 Tools changes
 -------------
@@ -230,32 +230,30 @@ for MacVTap NICs only:
   ip link set $INTERFACE down
   ip link delete $INTERFACE
 
-To be able to call the `kvm-ifdown` script we should extend the KVM's
-``_ConfigureNIC`` method with an extra argument that is the name of the
-script to be invoked, instead of calling by default the `kvm-ifup`
-script, as it currently happens.
+To invoke the `kvm-ifdown` script we'll create a new method for the KVM
+hypervisor, named ``_UnconfigureNIC``, which will be an equivalent
+method to ``_ConfigureNIC`` but it will be used to un-configure the
+specified instance NIC. Also, we'll introduce another method named
+``_HandleInstanceNICs`` which is meant to {un}configure all NICs of a
+given instance depending on the function that it will receive as
+argument (one of `_ConfigureNIC`/`_UnconfigureNIC`). This method will
+read the NIC runtime files of an instance and will invoke the respective
+kvm script for those NICs. This method will be called in all cases where
+instance NICs needs to be cleaned up (shutdown, migration, removal).
 
-The invocation of the `kvm-ifdown` script will be made through a
-separate method that we will create, named ``_RemoveStaleMacvtapDevs``.
-This method will read the NIC runtime files of an instance and will
-remove any devices using the MacVTap interface. This method will be
-included in the ``CleanupInstance`` method in order to cover all the
-cases where an instance using MacVTap NICs needs to be cleaned up.
-
-Besides the instance shutdown, there are a couple of cases where the
+Besides the above cases, there is another case where the
 MacVTap NICs will need to be cleaned up too. In case of an internal
 instance shutdown, where the ``kvmd`` is not enabled, the instance will
 be in ``ERROR_DOWN`` state. In that case, when the instance is started
-either by the `ganeti-watcher` or by the admin, the ``CleanupInstance``
+either by the `ganeti-watcher` or by the admin, the ``_HandleInstanceNICs``
 method, and consequently the `kvm-ifdown` script, will not be called and
 so the MacVTap NICs will have to manually be deleted. Otherwise starting
 the instance will result in more than one MacVTap devices using the same
-MAC address. An instance migration is another case where deleting an
-instance will keep stale MacVTap devices on the source node.  In order
-to solve those potential issues, we will explicitly call the
-``_RemoveStaleMacvtapDevs`` method after a successful instance migration
-on the source node, and also before creating a new device for a NIC that
-is using the MacVTap interface to remove any stale devices.
+MAC address. In order to solve that potential issue, we'll include a new
+method in the `ganeti-watcher` daemon which will run on every node and
+will cleanup any stale MacVTap devices found. This method will be the
+``_CleanupStaleMacvtapDevs``, and initially will be functional for the
+KVM hypervisor only.
 
 .. _here: http://thread.gmane.org/gmane.comp.emulators.kvm.devel/61824/)
 
